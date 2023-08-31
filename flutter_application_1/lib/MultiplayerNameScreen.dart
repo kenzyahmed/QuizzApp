@@ -1,103 +1,127 @@
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_application_1/MultiplayerNameScreen.dart';
+import 'package:get/get.dart';
+import 'package:flutter_application_1/controllers/quiz_controller.dart';
+import 'package:flutter_application_1/screens/quiz_screen/quiz_screen.dart';
+import 'package:flutter_application_1/widgets/custom_button.dart';
 class MultiplayerNameScreen extends StatefulWidget {
   const MultiplayerNameScreen({Key? key}) : super(key: key);
+  static const routeName = '/welcome_screen';
 
   @override
-  _MultiplayerNameScreenState createState() => _MultiplayerNameScreenState();
+  State<MultiplayerNameScreen> createState() => _MultiplayerNameScreenState();
 }
 
 class _MultiplayerNameScreenState extends State<MultiplayerNameScreen> {
-  List<TextEditingController> _nameControllers = [];
+  final _nameController = TextEditingController();
 
-  void _addPlayer() {
-    setState(() {
-      _nameControllers.add(TextEditingController());
-    });
-  }
+  final GlobalKey<FormState> _formkey = GlobalKey();
 
-  void _startQuiz() {
-    List<String> playerNames = _nameControllers
-        .map((controller) => controller.text.trim())
-        .where((name) => name.isNotEmpty)
-        .toList();
-
-    if (playerNames.isNotEmpty) {
-      // Navigate to the quiz screen or perform any other actions
-      // with the player names here
-    }
+  void _submit(context) {
+    FocusScope.of(context).unfocus();
+    if (!_formkey.currentState!.validate()) return;
+    _formkey.currentState!.save();
+    Get.offAndToNamed(QuizScreen.routeName);
+    Get.find<QuizController>().startTimer();
   }
 
   @override
   void dispose() {
-    for (var controller in _nameControllers) {
-      controller.dispose();
-    }
+    _nameController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50), // Hide the app bar
-        child: AppBar(
-          backgroundColor: Color(0xFFBFD2B8),
-          elevation: 0.0, // Remove the bottom border
-        ),
-      ),
+
+      resizeToAvoidBottomInset: false,
+      extendBody: true,
       body: Container(
-        height: screenHeight,
-        decoration: BoxDecoration(
+        constraints: BoxConstraints.expand(),
+        decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('images/back.jpg'),
+            image: AssetImage('images/sui.png'),
             fit: BoxFit.cover,
           ),
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Enter names of players:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 16),
-                Column(
-                  children: List.generate(
-                    _nameControllers.length,
-                        (index) => TextFormField(
-                      controller: _nameControllers[index],
-                      decoration: InputDecoration(
-                        labelText: 'Player ${index + 1}',
-                        border: OutlineInputBorder(),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(
+                    flex: 1,
+                  ),
+                  Text(
+                    'Let\'s start Quiz,',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  SizedBox(height: 20,),
+                  Text(
+                    'Enter your name to start',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headline6!
+                        .copyWith(color: Colors.black),
+                  ),
+                  SizedBox(height: 25,),
+                  Form(
+                    key: _formkey,
+                    child: GetBuilder<QuizController>(
+                      init: Get.find<QuizController>(),
+                      builder: (controller) => TextFormField(
+                        controller: _nameController,
+                        style: const TextStyle(color: Colors.black),
+                        decoration: const InputDecoration(
+                          labelText: 'Full Name',
+                          labelStyle: TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(width: 3),
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(15.0),
+                            ),
+                          ),
+                        ),
+                        validator: (String? val) {
+                          if (val!.isEmpty) {
+                            return 'Name should not be empty';
+                          } else {
+                            return null;
+                          }
+                        },
+                        onSaved: (String? val) {
+                          controller.name = val!.trim().toUpperCase();
+                        },
+                        onFieldSubmitted: (_) => _submit(context),
                       ),
                     ),
                   ),
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _addPlayer,
-                  style: ElevatedButton.styleFrom(
-                    primary: Colors.lightGreen[800], // Change button color to orange
+                  SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Column(
+                      children: [
+                        CustomButton(
+                          width: double.infinity,
+                          onPressed: () => _submit(context),
+                          text: 'Let\'s Start Quiz',
+                        ),
+
+                      ],
+                    ),
                   ),
-                  child: Text('Add Player'),
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _startQuiz,
-                  style: ElevatedButton.styleFrom(
-                    primary: Colors.lightGreen[800], // Change button color to orange
+                  const Spacer(
+                    flex: 1,
                   ),
-                  child: Text('Start Quiz'),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

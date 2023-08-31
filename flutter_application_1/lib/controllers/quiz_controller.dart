@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/MultiplayerNameScreen.dart';
 import 'package:get/get.dart';
 import 'package:flutter_application_1/models/question_model.dart';
 import 'package:flutter_application_1/screens/result_screen/result_screen.dart';
@@ -205,11 +206,5 @@ class QuizController extends GetxController{
 
   void stopTimer() => _timer!.cancel();
   //call when start again quiz
-  void startAgain() {
-    _correctAnswer = null;
-    _countOfCorrectAnswers = 0;
-    resetAnswer();
-    _selectAnswer = null;
-    Get.offAllNamed(WelcomeScreen.routeName);
-  }
+
 }
