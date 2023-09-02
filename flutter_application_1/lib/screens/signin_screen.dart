@@ -1,32 +1,39 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/quiz_main.dart';
-import 'package:flutter_application_1/screens/home_screen.dart';
 import 'package:flutter_application_1/screens/reset_password.dart';
 import 'package:flutter_application_1/screens/signup_screen.dart';
 import 'package:flutter_application_1/reusable_widgets/reusable_widget.dart';
-import 'package:flutter_application_1/utils/color_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({Key? key}) : super(key: key);
 
   @override
-  _SignInScreenState createState() => _SignInScreenState();
+  State<SignInScreen> createState() => _SignInScreenState();
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  TextEditingController _passwordTextController = TextEditingController();
-  TextEditingController _emailTextController = TextEditingController();
+  final TextEditingController _passwordTextController = TextEditingController();
+  final TextEditingController _emailTextController = TextEditingController();
   bool _isErrorVisible = false; // Flag to control error message visibility
+  late SharedPreferences preferences;
+
+  @override
+  void initState() {
+    initPreferences();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('images/back.jpg'), // Replace with your image path
+            image:
+                AssetImage('images/back.jpg'), // Replace with your image path
             fit: BoxFit.cover,
           ),
         ),
@@ -38,7 +45,8 @@ class _SignInScreenState extends State<SignInScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Container(
-                    padding: EdgeInsets.only(bottom: 20), // Adjust the padding as needed
+                    padding: const EdgeInsets.only(
+                        bottom: 20), // Adjust the padding as needed
                     child: Text(
                       "Sign In",
                       style: TextStyle(
@@ -49,7 +57,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                   if (_isErrorVisible)
-                    Text(
+                    const Text(
                       "Invalid username or password.",
                       style: TextStyle(color: Colors.red),
                     ),
@@ -88,15 +96,22 @@ class _SignInScreenState extends State<SignInScreen> {
                       password: _passwordTextController.text,
                     )
                         .then((value) {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) => quizMain()));
+                      //TIP: add this command to save login value.
+                      preferences.setBool("is_logged_in", true);
+                      // TIP: change push to pushReplacement to route to another screen and remove auth screen.
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const QuizMain()));
                     }).catchError((error) {
-                      print("Error ${error.toString()}");
+                      //TIP: add this check before any print to make print command only for debug moda *this recommended by flutter*
+                      if (kDebugMode) {
+                        print("Error ${error.toString()}");
+                      }
                       setState(() {
                         _isErrorVisible = true; // Show error message
                       });
                     });
-
                   }),
                   signUpOption(),
                 ],
@@ -117,7 +132,7 @@ class _SignInScreenState extends State<SignInScreen> {
         GestureDetector(
           onTap: () {
             Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SignUpScreen()));
+                MaterialPageRoute(builder: (context) => const SignUpScreen()));
           },
           child: const Text(
             " Sign Up",
@@ -139,8 +154,8 @@ class _SignInScreenState extends State<SignInScreen> {
           style: TextStyle(color: Colors.white70),
           textAlign: TextAlign.right,
         ),
-        onPressed: () => Navigator.push(
-            context, MaterialPageRoute(builder: (context) => ResetPassword())),
+        onPressed: () => Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const ResetPassword())),
       ),
     );
   }
@@ -149,5 +164,15 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() {
       _isErrorVisible = false;
     });
+  }
+
+  void initPreferences() async {
+    preferences = await SharedPreferences.getInstance();
+    //TIP: check if user is logged in before or not.
+    if (preferences.getBool("is_logged_in") ?? false) {
+      // ignore: use_build_context_synchronously
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => const QuizMain()));
+    }
   }
 }

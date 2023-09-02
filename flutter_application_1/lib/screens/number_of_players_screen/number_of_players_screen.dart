@@ -1,45 +1,46 @@
-
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/MultiplayerNameScreen.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_application_1/multi_player_name_screen.dart';
 import 'package:get/get.dart';
 import 'package:flutter_application_1/controllers/quiz_controller.dart';
-import 'package:flutter_application_1/screens/quiz_screen/quiz_screen.dart';
 import 'package:flutter_application_1/widgets/custom_button.dart';
-class MultiplayerNameScreen extends StatefulWidget {
-  const MultiplayerNameScreen({Key? key}) : super(key: key);
-  static const routeName = '/welcome_screen';
+import 'package:shared_preferences/shared_preferences.dart';
+
+// TIP: I added this screen to enable for user to select number of players.
+class NumberOfPlayersScreen extends StatefulWidget {
+  const NumberOfPlayersScreen({Key? key}) : super(key: key);
+  static const routeName = '/number_of_player_screen';
 
   @override
-  State<MultiplayerNameScreen> createState() => _MultiplayerNameScreenState();
+  State<NumberOfPlayersScreen> createState() => _NumberOfPlayersScreenState();
 }
 
-class _MultiplayerNameScreenState extends State<MultiplayerNameScreen> {
-  final _nameController = TextEditingController();
+class _NumberOfPlayersScreenState extends State<NumberOfPlayersScreen> {
+  final countController = TextEditingController();
 
-  final GlobalKey<FormState> _formkey = GlobalKey();
+  final GlobalKey<FormState> formkey = GlobalKey();
 
   void _submit(context) {
     FocusScope.of(context).unfocus();
-    if (!_formkey.currentState!.validate()) return;
-    _formkey.currentState!.save();
-    Get.offAndToNamed(QuizScreen.routeName);
+    if (!formkey.currentState!.validate()) return;
+    formkey.currentState!.save();
+    Get.offAndToNamed(MultiplayerNameScreen.routeName);
     Get.find<QuizController>().startTimer();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    countController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       resizeToAvoidBottomInset: false,
       extendBody: true,
       body: Container(
-        constraints: BoxConstraints.expand(),
+        constraints: const BoxConstraints.expand(),
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('images/sui.png'),
@@ -57,28 +58,37 @@ class _MultiplayerNameScreenState extends State<MultiplayerNameScreen> {
                   const Spacer(
                     flex: 1,
                   ),
-                  Text(
-                    'Let\'s start Quiz,',
+                  const Text(
+                    'Number of Players',
                     style: TextStyle(color: Colors.black),
                   ),
-                  SizedBox(height: 20,),
+                  const SizedBox(
+                    height: 20,
+                  ),
                   Text(
-                    'Enter your name to start',
+                    'Enter number of players to start this quiz',
                     style: Theme.of(context)
                         .textTheme
-                        .headline6!
+                        .titleLarge!
                         .copyWith(color: Colors.black),
                   ),
-                  SizedBox(height: 25,),
+                  const SizedBox(
+                    height: 25,
+                  ),
                   Form(
-                    key: _formkey,
+                    key: formkey,
                     child: GetBuilder<QuizController>(
                       init: Get.find<QuizController>(),
                       builder: (controller) => TextFormField(
-                        controller: _nameController,
+                        keyboardType: TextInputType.number,
+                        controller: countController,
+                        inputFormatters: [
+                          //TIP: this make field receive only digits or number
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
                         style: const TextStyle(color: Colors.black),
                         decoration: const InputDecoration(
-                          labelText: 'Full Name',
+                          labelText: 'Number Of Players',
                           labelStyle: TextStyle(color: Colors.grey),
                           border: OutlineInputBorder(
                             borderSide: BorderSide(width: 3),
@@ -89,19 +99,31 @@ class _MultiplayerNameScreenState extends State<MultiplayerNameScreen> {
                         ),
                         validator: (String? val) {
                           if (val!.isEmpty) {
-                            return 'Name should not be empty';
+                            return 'Number of players should be not empty';
+                            //TIP: change this value to controll number of player limit.
+                          } else if (int.parse(val) < 1 || int.parse(val) > 5) {
+                            return 'Number of players should be between 1 to 5 players';
                           } else {
                             return null;
                           }
                         },
-                        onSaved: (String? val) {
-                          controller.name = val!.trim().toUpperCase();
+                        onSaved: (String? val) async {
+                          final SharedPreferences preferences =
+                              await SharedPreferences.getInstance();
+
+                          await preferences.setInt('number_of_players',
+                              int.parse(countController.text));
+                              //TIP: reset previous scores for user
+                          await preferences
+                              .setStringList('previous_scores', []);
+                          await preferences
+                              .setStringList('previous_players', []);
                         },
                         onFieldSubmitted: (_) => _submit(context),
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.center,
                     child: Column(
@@ -111,7 +133,6 @@ class _MultiplayerNameScreenState extends State<MultiplayerNameScreen> {
                           onPressed: () => _submit(context),
                           text: 'Let\'s Start Quiz',
                         ),
-
                       ],
                     ),
                   ),

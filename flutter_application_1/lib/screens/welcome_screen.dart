@@ -1,9 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/MultiplayerNameScreen.dart';
+import 'package:flutter_application_1/multi_player_name_screen.dart';
+import 'package:flutter_application_1/screens/number_of_players_screen/number_of_players_screen.dart';
+import 'package:flutter_application_1/screens/signin_screen.dart';
 import 'package:get/get.dart';
 import 'package:flutter_application_1/controllers/quiz_controller.dart';
 import 'package:flutter_application_1/screens/quiz_screen/quiz_screen.dart';
 import 'package:flutter_application_1/widgets/custom_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
   static const routeName = '/welcome_screen';
@@ -16,6 +22,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _nameController = TextEditingController();
 
   final GlobalKey<FormState> _formkey = GlobalKey();
+
+  late SharedPreferences preferences;
+  late List<String> previousScores = [];
+  late int numberOfPlayers = 0;
+  bool shouldShowCompleteButton = false;
+
+  @override
+  void initState() {
+    initPreferences();
+    super.initState();
+  }
 
   void _submit(context) {
     FocusScope.of(context).unfocus();
@@ -34,11 +51,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       resizeToAvoidBottomInset: false,
       extendBody: true,
       body: Container(
-        constraints: BoxConstraints.expand(),
+        constraints: const BoxConstraints.expand(),
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('images/sui.png'),
@@ -56,19 +72,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   const Spacer(
                     flex: 2,
                   ),
-                  Text(
+                  //TIP: make widget constant if for build it just one time and never rebuild it again. *for performance wise
+                  const Text(
                     'Let\'s start Quiz,',
                     style: TextStyle(color: Colors.black),
                   ),
-                  SizedBox(height: 20,),
+                  const SizedBox(
+                    height: 20,
+                  ),
                   Text(
                     'Enter your name to start',
                     style: Theme.of(context)
                         .textTheme
-                        .headline6!
+                        .titleLarge!
                         .copyWith(color: Colors.black),
                   ),
-               SizedBox(height: 25,),
+                  const SizedBox(
+                    height: 25,
+                  ),
                   Form(
                     key: _formkey,
                     child: GetBuilder<QuizController>(
@@ -100,7 +121,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.center,
                     child: Column(
@@ -110,19 +131,61 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           onPressed: () => _submit(context),
                           text: 'Let\'s Start Quiz',
                         ),
-                        SizedBox(height: 20), // Adding spacing between buttons
+                        const SizedBox(
+                            height: 20), // Adding spacing between buttons
                         CustomButton(
                           width: double.infinity,
-                          text: 'Let\'s Start with Mult Players',
+                          text: 'Let\'s Start with Multi Players',
                           onPressed: () => Navigator.push(
-                              context, MaterialPageRoute(builder: (context) => MultiplayerNameScreen())),
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NumberOfPlayersScreen())),
                         ),
-
+                        //TIP: add this button when previous scores is less than number of players
+                        if(shouldShowCompleteButton)
+                        Column(
+                          children: [
+                            const SizedBox(height: 20),
+                            CustomButton(
+                              width: double.infinity,
+                              text: 'Complete Previous Quiz',
+                              onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const MultiplayerNameScreen())),
+                            )
+                          ],
+                        ),
                       ],
                     ),
                   ),
                   const Spacer(
                     flex: 2,
+                  ),
+                  // TIP: I added this to enable user to logout from this screen
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: CustomButton(
+                      onPressed: () {
+                        FirebaseAuth.instance.signOut().then((value) async {
+                          if (kDebugMode) {
+                            print("Signed Out");
+                          }
+                          await preferences.clear();
+                          // ignore: use_build_context_synchronously
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const SignInScreen()));
+                        });
+                      },
+                      text: 'Sign Out',
+                    ),
                   ),
                 ],
               ),
@@ -131,5 +194,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         ),
       ),
     );
+  }
+
+  void initPreferences() async {
+    preferences = await SharedPreferences.getInstance();
+    previousScores = preferences.getStringList("previous_scores") ?? [];
+    numberOfPlayers = preferences.getInt("number_of_players") ?? 0;
+    setState(() {
+      //TIP: check if previous scores is less than number of players.
+      shouldShowCompleteButton = previousScores.length < numberOfPlayers;
+    });
   }
 }

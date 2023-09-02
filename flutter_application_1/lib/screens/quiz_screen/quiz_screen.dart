@@ -39,7 +39,7 @@ class QuizScreen extends StatelessWidget {
                               text: 'Question ',
                               style: Theme.of(context)
                                   .textTheme
-                                  .headline4!
+                                  .headlineMedium!
                                   .copyWith(color: Colors.black),
                               children: [
                                 TextSpan(
@@ -48,19 +48,19 @@ class QuizScreen extends StatelessWidget {
                                         .toString(),
                                     style: Theme.of(context)
                                         .textTheme
-                                        .headline4!
+                                        .headlineMedium!
                                         .copyWith(color: Colors.black)),
                                 TextSpan(
                                     text: '/',
                                     style: Theme.of(context)
                                         .textTheme
-                                        .headline5!
+                                        .headlineSmall!
                                         .copyWith(color: Colors.black)),
                                 TextSpan(
                                     text: controller.countOfQuestion.toString(),
                                     style: Theme.of(context)
                                         .textTheme
-                                        .headline5!
+                                        .headlineSmall!
                                         .copyWith(color: Colors.black)),
                               ]),
                         ),
@@ -83,12 +83,12 @@ class QuizScreen extends StatelessWidget {
                       itemCount: controller.questionsList.length,
                     ),
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  // const SizedBox(
+                  //   height: 20,
+                  // ),
                   Image.asset(
                     "images/shf.png",
-                    height: 250,
+                    height: 200,
                   ),
                 ],
               ),

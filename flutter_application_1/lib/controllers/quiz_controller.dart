@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/MultiplayerNameScreen.dart';
 import 'package:get/get.dart';
 import 'package:flutter_application_1/models/question_model.dart';
 import 'package:flutter_application_1/screens/result_screen/result_screen.dart';
-import 'package:flutter_application_1/screens/welcome_screen.dart';
 
 class QuizController extends GetxController{
   String name = '';
